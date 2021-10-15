@@ -14,7 +14,6 @@ taboolib {
     install("module-chat")
     install("module-effect")
     install("platform-bukkit")
-    classifier = null
     version = "6.0.3-9"
 }
 
@@ -23,9 +22,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly("ink.ptms:nms-all:1.0.0")
-    compileOnly("ink.ptms.core:v11701:11701:mapped")
-    compileOnly("ink.ptms.core:v11701:11701:universal")
+    compileOnly("ink.ptms.core:v11600:11600:all")
     compileOnly(kotlin("stdlib"))
     compileOnly(fileTree("libs"))
 }

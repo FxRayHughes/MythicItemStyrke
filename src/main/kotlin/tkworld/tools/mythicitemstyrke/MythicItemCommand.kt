@@ -5,7 +5,9 @@ import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import taboolib.common.LifeCycle
 import taboolib.common.platform.Awake
+import taboolib.common.platform.ProxyCommandSender
 import taboolib.common.platform.command.command
+import taboolib.common.platform.function.adaptPlayer
 import taboolib.platform.util.giveItem
 import taboolib.platform.util.isAir
 
@@ -17,28 +19,30 @@ object MythicItemCommand {
         command(name = "itemcommand", aliases = listOf("ic"), permission = "*") {
             literal("give") {
                 dynamic {
-                    suggestion<Player> { _, _ ->
+                    suggestion<ProxyCommandSender> { _, _ ->
                         Bukkit.getOnlinePlayers().map { it.name }
                     }
                     dynamic {
-                        suggestion<Player> { _, _ ->
+                        suggestion<ProxyCommandSender> { _, _ ->
                             MythicMobs.inst().itemManager.items.map { it.internalName }.toList()
                         }
                         dynamic(optional = true) {
-                            suggestion<Player> { _, _ ->
+                            suggestion<ProxyCommandSender> { _, _ ->
                                 listOf("1", "32", "64")
                             }
-                            execute<Player> { sender, context, _ ->
+                            execute<ProxyCommandSender> { sender, context, _ ->
                                 val type = context.argument(-1)
                                 val amount = context.argument(0)?.toIntOrNull() ?: 1
                                 val player = Bukkit.getPlayerExact(context.argument(-2)!!) ?: return@execute
                                 if (type != null) {
                                     if (type.getItemStackM().isAir()) {
-                                        sender.error("物品不存在！")
-                                        return@execute
+                                        if (sender is Player){
+                                            sender.error("物品不存在！")
+                                            return@execute
+                                        }
                                     }
                                 }
-                                if (sender.isOp) {
+                                if (sender.isOp && sender is Player) {
                                     sender.info("成功给予 &f${player.name} ${type}X${amount}")
                                 }
                                 type?.let { player.giveItem(it.getItemStackM(), amount) }
@@ -64,10 +68,10 @@ object MythicItemCommand {
             }
             literal("ui") {
                 dynamic(optional = true) {
-                    suggestion<Player> { _, _ ->
+                    suggestion<ProxyCommandSender> { _, _ ->
                         Bukkit.getOnlinePlayers().map { it.name }
                     }
-                    execute<Player> { _, context, _ ->
+                    execute<ProxyCommandSender> { _, context, _ ->
                         val player = Bukkit.getPlayerExact(context.argument(0)!!) ?: return@execute
                         MythicItemUI.open(player)
                     }
