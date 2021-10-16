@@ -4,6 +4,7 @@ import io.lumine.xikage.mythicmobs.io.MythicConfig
 import org.bukkit.Bukkit
 import org.bukkit.event.block.Action
 import org.bukkit.event.block.BlockBreakEvent
+import org.bukkit.event.block.BlockPlaceEvent
 import org.bukkit.event.player.*
 import taboolib.common.LifeCycle
 import taboolib.common.platform.Awake
@@ -31,6 +32,18 @@ object MythicItemStyrke : Plugin() {
         if (!item.isAir()) {
             val mmi = item.toMythicItem() ?: return
             mmi.config.getAction("onBlockBreak").ketherEval(event.player)
+        }
+    }
+
+    @SubscribeEvent
+    fun onBlockPlaceEvent(event: BlockPlaceEvent) {
+        val item = event.player.inventory.itemInMainHand
+        if (!item.isAir()) {
+            val mmi = item.toMythicItem() ?: return
+            mmi.config.getAction("onBlockPlace").ketherEval(event.player)
+            if (!mmi.config.getBoolean("Styrke.setting.place", true)) {
+                event.isCancelled = true
+            }
         }
     }
 
@@ -144,6 +157,9 @@ object MythicItemStyrke : Plugin() {
                 else -> {
                     mmi.config.getAction("onStyrkeClick").ketherEval(player)
                 }
+            }
+            if (mmi.config.getBoolean("Styrke.setting.consume", false)) {
+                event.item!!.amount = event.item!!.amount - 1
             }
         }
     }

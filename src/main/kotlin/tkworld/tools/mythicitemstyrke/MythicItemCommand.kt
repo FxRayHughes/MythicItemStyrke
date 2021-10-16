@@ -27,7 +27,7 @@ object MythicItemCommand {
                             MythicMobs.inst().itemManager.items.map { it.internalName }.toList()
                         }
                         dynamic(optional = true) {
-                            suggestion<ProxyCommandSender> { _, _ ->
+                            suggestion<ProxyCommandSender>(uncheck = true) { _, _ ->
                                 listOf("1", "32", "64")
                             }
                             execute<ProxyCommandSender> { sender, context, _ ->
@@ -36,7 +36,7 @@ object MythicItemCommand {
                                 val player = Bukkit.getPlayerExact(context.argument(-2)!!) ?: return@execute
                                 if (type != null) {
                                     if (type.getItemStackM().isAir()) {
-                                        if (sender is Player){
+                                        if (sender is Player) {
                                             sender.error("物品不存在！")
                                             return@execute
                                         }

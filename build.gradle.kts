@@ -13,6 +13,7 @@ taboolib {
     install("module-nms-util")
     install("module-chat")
     install("module-effect")
+    install("module-configuration")
     install("platform-bukkit")
     version = "6.0.3-9"
 }
