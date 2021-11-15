@@ -32,36 +32,32 @@ object MythicItemCommand {
                             }
                             execute<ProxyCommandSender> { sender, context, _ ->
                                 val type = context.argument(-1)
-                                val amount = context.argument(0)?.toIntOrNull() ?: 1
-                                val player = Bukkit.getPlayerExact(context.argument(-2)!!) ?: return@execute
-                                if (type != null) {
-                                    if (type.getItemStackM().isAir()) {
-                                        if (sender is Player) {
-                                            sender.error("物品不存在！")
-                                            return@execute
-                                        }
+                                val amount = context.argument(0).toIntOrNull() ?: 1
+                                val player = Bukkit.getPlayerExact(context.argument(-2)) ?: return@execute
+                                if (type.getItemStackM().isAir()) {
+                                    if (sender is Player) {
+                                        sender.error("物品不存在！")
+                                        return@execute
                                     }
                                 }
                                 if (sender.isOp && sender is Player) {
                                     sender.info("成功给予 &f${player.name} ${type}X${amount}")
                                 }
-                                type?.let { player.giveItem(it.getItemStackM(), amount) }
+                                type.let { player.giveItem(it.getItemStackM(), amount) }
                             }
                         }
                         execute<Player> { sender, context, _ ->
                             val type = context.argument(0)
                             val amount = 1
-                            val player = Bukkit.getPlayerExact(context.argument(-1)!!) ?: return@execute
-                            if (type != null) {
-                                if (type.getItemStackM().isAir()) {
-                                    sender.error("物品不存在！")
-                                    return@execute
-                                }
+                            val player = Bukkit.getPlayerExact(context.argument(-1)) ?: return@execute
+                            if (type.getItemStackM().isAir()) {
+                                sender.error("物品不存在！")
+                                return@execute
                             }
                             if (sender.isOp) {
                                 sender.info("成功给予 &f${player.name} ${type}X${amount}")
                             }
-                            type?.let { player.giveItem(it.getItemStackM(), amount) }
+                            type.let { player.giveItem(it.getItemStackM(), amount) }
                         }
                     }
                 }
@@ -72,7 +68,7 @@ object MythicItemCommand {
                         Bukkit.getOnlinePlayers().map { it.name }
                     }
                     execute<ProxyCommandSender> { _, context, _ ->
-                        val player = Bukkit.getPlayerExact(context.argument(0)!!) ?: return@execute
+                        val player = Bukkit.getPlayerExact(context.argument(0)) ?: return@execute
                         MythicItemUI.open(player)
                     }
                 }

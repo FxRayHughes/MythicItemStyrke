@@ -21,8 +21,16 @@ object MythicItemStyrke : Plugin() {
         info("Successfully running ExamplePlugin!")
     }
 
-    private fun MythicConfig.getAction(key: String): List<String> {
-        return this.getStringList("Styrke.action.${key}")
+    class ActionM(val list: MutableList<String>, val cancelled: Boolean)
+
+    private fun MythicConfig.getAction(key: String): ActionM {
+        if (this.getStringList("Styrke.action.${key}!!").size != 0) {
+            return ActionM(this.getStringList("Styrke.action.${key}"), true)
+        }
+        if (this.getStringList("Styrke.action.${key}").size != 0) {
+            return ActionM(this.getStringList("Styrke.action.${key}"), false)
+        }
+        return ActionM(mutableListOf(), false)
     }
 
     //破坏方块
@@ -31,7 +39,9 @@ object MythicItemStyrke : Plugin() {
         val item = event.player.inventory.itemInMainHand
         if (!item.isAir()) {
             val mmi = item.toMythicItem() ?: return
-            mmi.config.getAction("onBlockBreak").ketherEval(event.player)
+            val actionM = mmi.config.getAction("onBlockBreak")
+            actionM.list.ketherEval(event.player)
+            event.isCancelled = actionM.cancelled
         }
     }
 
@@ -40,7 +50,9 @@ object MythicItemStyrke : Plugin() {
         val item = event.player.inventory.itemInMainHand
         if (!item.isAir()) {
             val mmi = item.toMythicItem() ?: return
-            mmi.config.getAction("onBlockPlace").ketherEval(event.player)
+            val actionM = mmi.config.getAction("onBlockPlace")
+            actionM.list.ketherEval(event.player)
+            event.isCancelled = actionM.cancelled
             if (!mmi.config.getBoolean("Styrke.setting.place", true)) {
                 event.isCancelled = true
             }
@@ -54,7 +66,7 @@ object MythicItemStyrke : Plugin() {
                 player.inventory.toList().forEach { item ->
                     if (item != null && item.isNotAir()) {
                         val mmi = item.toMythicItem() ?: return@submit
-                        mmi.config.getAction("onTimer").ketherEval(player)
+                        mmi.config.getAction("onTimer").list.ketherEval(player)
                     }
                 }
             }
@@ -68,7 +80,8 @@ object MythicItemStyrke : Plugin() {
         val item = player.inventory.itemInMainHand
         if (!item.isAir()) {
             val mmi = item.toMythicItem() ?: return
-            mmi.config.getAction("onItemBreak").ketherEval(event.player)
+            mmi.config.getAction("onItemBreak").list.ketherEval(event.player)
+
         }
     }
 
@@ -79,7 +92,10 @@ object MythicItemStyrke : Plugin() {
         val item = player.inventory.itemInMainHand
         if (!item.isAir()) {
             val mmi = item.toMythicItem() ?: return
-            mmi.config.getAction("onItemConsume").ketherEval(event.player)
+            val actionM = mmi.config.getAction("onItemConsume")
+            actionM.list.ketherEval(event.player)
+            event.isCancelled = actionM.cancelled
+
         }
     }
 
@@ -90,7 +106,9 @@ object MythicItemStyrke : Plugin() {
         val item = event.item.itemStack
         if (!item.isAir()) {
             val mmi = item.toMythicItem() ?: return
-            mmi.config.getAction("onPickUp").ketherEval(player)
+            val actionM = mmi.config.getAction("onPickUp")
+            actionM.list.ketherEval(event.player)
+            event.isCancelled = actionM.cancelled
         }
     }
 
@@ -101,7 +119,9 @@ object MythicItemStyrke : Plugin() {
         val item = event.itemDrop.itemStack
         if (!item.isAir()) {
             val mmi = item.toMythicItem() ?: return
-            mmi.config.getAction("onDrop").ketherEval(player)
+            val actionM = mmi.config.getAction("onDrop")
+            actionM.list.ketherEval(event.player)
+            event.isCancelled = actionM.cancelled
         }
     }
 
@@ -114,9 +134,9 @@ object MythicItemStyrke : Plugin() {
             return
         }
         val mmi = item.toMythicItem() ?: return
-        if (mmi.config.getBoolean("Styrke.food.enable", false)) {
+        val add = mmi.config.getInteger("Styrke.food.add")
+        if (add >= 1) {
             //设置饥饿值
-            val add = mmi.config.getInteger("Styrke.food.add")
             if (player.foodLevel + add >= 20) {
                 player.foodLevel = 20
             } else if (player.foodLevel + add <= 0) {
@@ -130,14 +150,17 @@ object MythicItemStyrke : Plugin() {
     //物品切换
     @SubscribeEvent
     fun onPlayerSwapHandItemsEvent(event: PlayerSwapHandItemsEvent) {
-        val player = event.player
         if (event.offHandItem.isNotAir()) {
             val mmi = event.offHandItem!!.toMythicItem() ?: return
-            mmi.config.getAction("onSwapToOffhand").ketherEval(player)
+            val actionM = mmi.config.getAction("onSwapToOffhand")
+            actionM.list.ketherEval(event.player)
+            event.isCancelled = actionM.cancelled
         }
         if (event.mainHandItem.isNotAir()) {
             val mmi = event.offHandItem!!.toMythicItem() ?: return
-            mmi.config.getAction("onSwapToMainHand").ketherEval(player)
+            val actionM = mmi.config.getAction("onSwapToMainHand")
+            actionM.list.ketherEval(event.player)
+            event.isCancelled = actionM.cancelled
         }
     }
 
@@ -145,17 +168,25 @@ object MythicItemStyrke : Plugin() {
     @SubscribeEvent
     fun onPlayerInteractEvent(event: PlayerInteractEvent) {
         if (event.item.isNotAir()) {
-            val player = event.player
             val mmi = event.item!!.toMythicItem() ?: return
+            val actionMs = mmi.config.getAction("onStyrkeClickAll")
+            actionMs.list.ketherEval(event.player)
+            event.isCancelled = actionMs.cancelled
             when (event.action) {
                 Action.LEFT_CLICK_AIR, Action.LEFT_CLICK_BLOCK -> {
-                    mmi.config.getAction("onLeftClick").ketherEval(player)
+                    val actionM = mmi.config.getAction("onLeftClick")
+                    actionM.list.ketherEval(event.player)
+                    event.isCancelled = actionM.cancelled
                 }
                 Action.RIGHT_CLICK_AIR, Action.RIGHT_CLICK_BLOCK -> {
-                    mmi.config.getAction("onRightClick").ketherEval(player)
+                    val actionM = mmi.config.getAction("onRightClick")
+                    actionM.list.ketherEval(event.player)
+                    event.isCancelled = actionM.cancelled
                 }
                 else -> {
-                    mmi.config.getAction("onStyrkeClick").ketherEval(player)
+                    val actionM = mmi.config.getAction("onStyrkeClick")
+                    actionM.list.ketherEval(event.player)
+                    event.isCancelled = actionM.cancelled
                 }
             }
             if (mmi.config.getBoolean("Styrke.setting.consume", false)) {

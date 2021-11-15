@@ -1,6 +1,6 @@
 plugins {
     java
-    id("io.izzel.taboolib") version "1.30"
+    id("io.izzel.taboolib") version "1.31"
     id("org.jetbrains.kotlin.jvm") version "1.5.10"
 }
 
@@ -15,7 +15,7 @@ taboolib {
     install("module-effect")
     install("module-configuration")
     install("platform-bukkit")
-    version = "6.0.3-9"
+    version = "6.0.4-5"
 }
 
 repositories {
@@ -23,7 +23,9 @@ repositories {
 }
 
 dependencies {
-    compileOnly("ink.ptms.core:v11600:11600:all")
+    compileOnly("ink.ptms:nms-all:1.0.0")
+    compileOnly("ink.ptms.core:v11701:11701:mapped")
+    compileOnly("ink.ptms.core:v11701:11701:universal")
     compileOnly(kotlin("stdlib"))
     compileOnly(fileTree("libs"))
 }
