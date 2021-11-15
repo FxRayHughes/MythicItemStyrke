@@ -189,8 +189,8 @@ object MythicItemStyrke : Plugin() {
                     event.isCancelled = actionM.cancelled
                 }
             }
-            if (mmi.config.getBoolean("Styrke.setting.consume", false)) {
-                event.item!!.amount = event.item!!.amount - 1
+            if (mmi.config.getInteger("Styrke.setting.consume", 0) != 0) {
+                event.item!!.amount = event.item!!.amount - mmi.config.getInteger("Styrke.setting.consume", 0)
             }
         }
     }
