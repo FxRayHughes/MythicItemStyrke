@@ -1,19 +1,29 @@
 package tkworld.tools.mythicitemstyrke
 
+import io.lumine.xikage.mythicmobs.api.bukkit.events.MythicMobDeathEvent
+import io.lumine.xikage.mythicmobs.api.bukkit.events.MythicMobSpawnEvent
 import io.lumine.xikage.mythicmobs.io.MythicConfig
+import io.lumine.xikage.mythicmobs.utils.config.ConfigurationSection
 import org.bukkit.Bukkit
+import org.bukkit.Material
+import org.bukkit.entity.LivingEntity
 import org.bukkit.event.block.Action
 import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.block.BlockPlaceEvent
 import org.bukkit.event.player.*
+import org.bukkit.inventory.ItemStack
 import taboolib.common.LifeCycle
 import taboolib.common.platform.Awake
 import taboolib.common.platform.Plugin
+import taboolib.common.platform.event.OptionalEvent
 import taboolib.common.platform.event.SubscribeEvent
 import taboolib.common.platform.function.info
 import taboolib.common.platform.function.submit
+import taboolib.common.util.random
+import taboolib.common5.Coerce
 import taboolib.platform.util.isAir
 import taboolib.platform.util.isNotAir
+import taboolib.type.BukkitEquipment
 
 object MythicItemStyrke : Plugin() {
 
@@ -169,6 +179,14 @@ object MythicItemStyrke : Plugin() {
     fun onPlayerInteractEvent(event: PlayerInteractEvent) {
         if (event.item.isNotAir()) {
             val mmi = event.item!!.toMythicItem() ?: return
+            if (mmi.config.getInteger("Styrke.setting.consume", 0) != 0) {
+                if (event.item!!.amount < mmi.config.getInteger("Styrke.setting.consume", 0)) {
+                    event.player.error("缺少物品!! 无法执行!!")
+                    return
+                } else {
+                    event.item!!.amount = event.item!!.amount - mmi.config.getInteger("Styrke.setting.consume", 0)
+                }
+            }
             val actionMs = mmi.config.getAction("onStyrkeClickAll")
             actionMs.list.ketherEval(event.player)
             event.isCancelled = actionMs.cancelled
@@ -189,9 +207,54 @@ object MythicItemStyrke : Plugin() {
                     event.isCancelled = actionM.cancelled
                 }
             }
-            if (mmi.config.getInteger("Styrke.setting.consume", 0) != 0) {
-                event.item!!.amount = event.item!!.amount - mmi.config.getInteger("Styrke.setting.consume", 0)
+        }
+    }
+
+    @SubscribeEvent(bind = "io.lumine.xikage.mythicmobs.api.bukkit.events.MythicMobSpawnEvent")
+    fun e1(oe: OptionalEvent) {
+        val e = oe.get<MythicMobSpawnEvent>()
+        val section =
+            e.mob.type.config.fileConfiguration.getConfigurationSection(e.mob.type.internalName + ".Styrke.equipments")
+                ?: return
+        submit(delay = 5) {
+            MythicUtil.equipment(section, e.entity as? LivingEntity ?: return@submit)
+        }
+    }
+
+    @SubscribeEvent(bind = "io.lumine.xikage.mythicmobs.api.bukkit.events.MythicMobDeathEvent")
+    fun e2(oe: OptionalEvent) {
+        val e = oe.get<MythicMobDeathEvent>()
+        e.mob.type.config.getStringList("Styrke.drops").forEach {
+            val args = it.split(" ")
+            if (args.size == 3 && !random(Coerce.toDouble(args[2]))) {
+                return@forEach
             }
+            val item = args[0].getItemStackM()
+            val amount = args.getOrElse(1) { "1" }.split("-").map { a -> Coerce.toInteger(a) }
+            item.amount = random(amount[0], amount.getOrElse(1) { amount[0] })
+            e.drops.add(item)
+        }
+    }
+
+    object MythicUtil {
+
+        fun equipment(equipment: ConfigurationSection?, entity: LivingEntity) {
+            equipment?.getValues(false)?.forEach { (slot, item) ->
+                val itemStack = if (item.toString() == "air" && !item.toString().startsWith("S-")) {
+                    ItemStack(Material.AIR)
+                } else {
+                    item.toString().getItemStackM()
+                }
+                val equipments = asEquipmentSlot(slot)
+                if (equipments != null) {
+                    equipments.setItem(entity, itemStack)
+                    equipments.setItemDropChance(entity, 0f)
+                }
+            }
+        }
+
+        fun asEquipmentSlot(id: String): BukkitEquipment? {
+            return BukkitEquipment.fromString(id)
         }
     }
 }

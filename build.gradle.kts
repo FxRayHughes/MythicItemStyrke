@@ -15,7 +15,7 @@ taboolib {
     install("module-effect")
     install("module-configuration")
     install("platform-bukkit")
-    version = "6.0.4-5"
+    version = "6.0.6-24"
 }
 
 repositories {
