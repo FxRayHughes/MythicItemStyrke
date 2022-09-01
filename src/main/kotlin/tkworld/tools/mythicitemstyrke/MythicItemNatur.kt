@@ -1,9 +1,11 @@
 package tkworld.tools.mythicitemstyrke
 
 import io.lumine.xikage.mythicmobs.MythicMobs
+import io.lumine.xikage.mythicmobs.api.bukkit.events.MythicMobItemGenerateEvent
 import io.lumine.xikage.mythicmobs.items.MythicItem
 import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
+import taboolib.common.platform.event.SubscribeEvent
 import taboolib.module.nms.ItemTagData
 import taboolib.module.nms.getItemTag
 import taboolib.module.nms.setItemTag
@@ -23,6 +25,15 @@ object MythicItemNatur {
         return MythicMobs.inst().itemManager.items.firstOrNull { it.displayName == itemStack.name() }
     }
 
+
+    @SubscribeEvent
+    fun onEvent(event: MythicMobItemGenerateEvent) {
+        val item = event.item
+        if (!item.config.getBoolean("natur", false)) {
+            return
+        }
+        getItemStack(item).getItemTag().saveTo(event.itemStack)
+    }
 
     fun getItemStack(mythicItem: MythicItem): ItemStack {
         val itemStack =

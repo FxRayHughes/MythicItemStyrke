@@ -17,11 +17,34 @@ import taboolib.module.nms.getI18nName
 import taboolib.platform.util.hasLore
 import taboolib.platform.util.hasName
 import tkworld.tools.mythicitemstyrke.serializer.Serializer
-import java.util.*
-
+import tkworld.tools.mythicitemstyrke.weight.WeightCategory
+import tkworld.tools.mythicitemstyrke.weight.WeightUtil
 
 
 fun List<String>.ketherEval(senderPlayer: Player) {
+
+    if (firstOrNull()?.startsWith("random: ") == true) {
+        val number = firstOrNull()?.replace("random: ", "")?.toIntOrNull() ?: return
+        val list = this.drop(1).mapNotNull {
+            val keys = it.split(" | ")
+            WeightCategory(
+                keys.getOrNull(1) ?: return@mapNotNull null,
+                (keys.getOrNull(0) ?: return@mapNotNull null).toIntOrNull() ?: return@mapNotNull null
+            )
+        }
+        val runs = (1..number).mapNotNull { WeightUtil.getWeightRandom(list) }
+        try {
+            KetherShell.eval(runs) {
+                sender = adaptPlayer(senderPlayer)
+            }
+        } catch (e: LocalizedException) {
+            e.printKetherErrorMessage()
+        } catch (e: Throwable) {
+            e.printKetherErrorMessage()
+        }
+        return
+    }
+
     try {
         KetherShell.eval(this) {
             sender = adaptPlayer(senderPlayer)

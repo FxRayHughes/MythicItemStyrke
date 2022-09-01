@@ -2,12 +2,12 @@ package tkworld.tools.mythicitemstyrke
 
 import io.lumine.xikage.mythicmobs.MythicMobs
 import org.bukkit.Bukkit
+import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import taboolib.common.LifeCycle
 import taboolib.common.platform.Awake
 import taboolib.common.platform.ProxyCommandSender
 import taboolib.common.platform.command.command
-import taboolib.common.platform.function.adaptPlayer
 import taboolib.platform.util.giveItem
 import taboolib.platform.util.isAir
 
@@ -74,6 +74,35 @@ object MythicItemCommand {
                 }
                 execute<Player> { sender, _, _ ->
                     MythicItemUI.open(sender)
+                }
+            }
+            literal("run") {
+                dynamic(commit = "id") {
+                    suggestion<ProxyCommandSender> { _, _ ->
+                        MythicMobs.inst().itemManager.items.map { it.internalName }.toList()
+                    }
+                    dynamic(commit = "target") {
+                        suggestion<ProxyCommandSender> { _, _ ->
+                            Bukkit.getOnlinePlayers().map { it.name }
+                        }
+                        execute<CommandSender> { sender, context, argument ->
+                            val target = Bukkit.getPlayerExact(context.argument(0)) ?: return@execute
+                            val mmi = MythicMobs.inst().itemManager.getItem(context.argument(-1))
+                            if (!mmi.isPresent) {
+                                return@execute
+                            }
+                            val action = mmi.get().config.getStringList("Styrke.action.onCommand")
+                            action.ketherEval(target)
+                        }
+                    }
+                    execute<Player> { sender, context, argument ->
+                        val mmi = MythicMobs.inst().itemManager.getItem(context.argument(0))
+                        if (!mmi.isPresent) {
+                            return@execute
+                        }
+                        val action = mmi.get().config.getStringList("Styrke.action.onCommand")
+                        action.ketherEval(sender)
+                    }
                 }
             }
         }

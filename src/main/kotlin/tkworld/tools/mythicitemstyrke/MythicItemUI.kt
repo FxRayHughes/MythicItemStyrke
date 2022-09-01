@@ -2,6 +2,7 @@ package tkworld.tools.mythicitemstyrke
 
 import io.lumine.xikage.mythicmobs.MythicMobs
 import io.lumine.xikage.mythicmobs.items.MythicItem
+import org.bukkit.Material
 import org.bukkit.entity.Player
 import taboolib.library.xseries.XMaterial
 import taboolib.module.nms.getName
@@ -13,7 +14,6 @@ import taboolib.platform.util.giveItem
 import taboolib.platform.util.inventoryCenterSlots
 import taboolib.platform.util.replaceName
 import java.util.*
-import kotlin.collections.HashMap
 
 object MythicItemUI {
 
@@ -45,12 +45,17 @@ object MythicItemUI {
                 } else {
                     list.addAll(MythicMobs.inst().itemManager.items.toMutableList().filter { it.isThis(keys) })
                 }
-                list.sortByDescending { it.internalName }
-                list
+                list.sortedBy { it.internalName }
             }
             onGenerate { _, element, _, _ ->
-                val name = element.getItemStackM().getName()
-                element.getItemStackM().replaceName(name, "${name}§7 (${element.internalName})")
+                try {
+                    val name = element.getItemStackM().getName()
+                    element.getItemStackM().replaceName(name, "${name}§7 (${element.internalName})")
+                } catch (_: Exception) {
+                    buildItem(Material.STONE) {
+                        name = element.internalName
+                    }
+                }
             }
             onClick { event, element ->
                 if (event.rawSlot == 49) {
